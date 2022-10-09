@@ -7,7 +7,7 @@ from typing import Union, List
 import re
 
 from rich.text import Text
-from rich.prompt import IntPrompt, Prompt
+from rich.prompt import IntPrompt, Prompt, Prompt
 from rich.console import Console
 from rich.table import Table
 
@@ -31,7 +31,7 @@ class RichHideMyEmail(HideMyEmail):
                 self.cookies = f.read()
         else:
             self.console.log(
-                '[bold yellow][WARN][/] No "cookie.txt" file found! Generation might not work due to unauthorized access.')
+                '[bold yellow][WARN][/] 没有找到 "cookie.txt "文件! 由于未经授权的访问，可能无法正常工作。')
 
     async def _generate_one(self) -> Union[str, None]:
         # First, generate an email
@@ -47,11 +47,11 @@ class RichHideMyEmail(HideMyEmail):
             elif type(error) == dict and 'errorMessage' in error:
                 err_msg = error['errorMessage']
             self.console.log(
-                f'[bold red][ERR][/] - Failed to generate email. Reason: {err_msg}')
+                f'[bold red][ERR][/] - 生成匿名邮箱失败。原因是: {err_msg}')
             return
 
         email = gen_res['result']['hme']
-        self.console.log(f'[50%] "{email}" - Successfully generated')
+        self.console.log(f'[50%] "{email}" - 成功生成，正在激活...')
 
         # Then, reserve it
         reserve_res = await self.reserve_email(email)
@@ -66,10 +66,10 @@ class RichHideMyEmail(HideMyEmail):
             elif type(error) == dict and 'errorMessage' in error:
                 err_msg = error['errorMessage']
             self.console.log(
-                f'[bold red][ERR][/] "{email}" - Failed to reserve email. Reason: {err_msg}')
+                f'[bold red][ERR][/] "{email}" - 激活匿名邮箱失败。原因是: {err_msg}')
             return
 
-        self.console.log(f'[100%] "{email}" - Successfully reserved')
+        self.console.log(f'[100%] "{email}" - 激活成功')
         return email
 
     async def _generate(self, num: int):
@@ -85,13 +85,16 @@ class RichHideMyEmail(HideMyEmail):
             emails = []
             self.console.rule()
             s = IntPrompt.ask(
-                Text.assemble(("How many iCloud emails you want to generate?")), console=self.console)
+                Text.assemble(("你想生成多少个 iCloud 匿名邮箱？回车默认")), default=1, console=self.console)
+
+            self.label = Prompt.ask(
+                Text.assemble(("设置匿名邮箱在 iCloud 的标签 (备注) 回车默认")), default="rtuna's gen", console=self.console)
 
             count = int(s)
-            self.console.log(f'Generating {count} email(s)...')
+            self.console.log(f'正在生成 {count} 个匿名邮箱中...')
             self.console.rule()
 
-            with self.console.status(f"[bold green]Generating iCloud email(s)..."):
+            with self.console.status(f"[bold green]开始生成 iCloud 匿名邮箱..."):
                 while count > 0:
                     batch = await self._generate(count if count < MAX_CONCURRENT_TASKS else MAX_CONCURRENT_TASKS)
                     count -= MAX_CONCURRENT_TASKS
@@ -103,10 +106,10 @@ class RichHideMyEmail(HideMyEmail):
 
                 self.console.rule()
                 self.console.log(
-                    f':star: Emails have been saved into the "emails.txt" file')
+                    f':star: 生成的匿名邮箱已被保存到 "emails.txt "文件中')
 
                 self.console.log(
-                    f'[bold green]All done![/] Successfully generated [bold green]{len(emails)}[/] email(s)')
+                    f'[bold green]任务完成![/] 成功生成匿名邮箱共 [bold green]{len(emails)}[/] 个')
 
             return emails
         except KeyboardInterrupt:
@@ -124,7 +127,7 @@ class RichHideMyEmail(HideMyEmail):
             elif type(error) == dict and 'errorMessage' in error:
                 err_msg = error['errorMessage']
             self.console.log(
-                f'[bold red][ERR][/] - Failed to generate email. Reason: {err_msg}')
+                f'[bold red][ERR][/] - 生成匿名邮箱失败。原因是: {err_msg}')
             return
 
 
